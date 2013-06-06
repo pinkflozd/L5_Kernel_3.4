@@ -625,32 +625,11 @@ static int acpuclk_set_vdd_level(int vdd)
 static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 {
 	uint32_t reg_clkctl, reg_clksel, clk_div, src_sel;
-  
-  	#ifdef CONFIG_MSM7X27_OVERCLOCK  
-  	uint32_t a11_div;  
-  	#endif
 
 	reg_clksel = readl_relaxed(A11S_CLK_SEL_ADDR);
 
 	/* AHB_CLK_DIV */
 	clk_div = (reg_clksel >> 1) & 0x03;
-#ifdef CONFIG_MSM7X27_OVERCLOCK
-  	a11_div = hunt_s->a11clk_src_div;
-
- 	if (hunt_s->a11clk_khz > 600000) {
-    	a11_div=0;
-    	writel(hunt_s->a11clk_khz/19200, PLLn_L_VAL(0));
-    	cpu_relax();
-    	udelay(50);
-  	} else if (hunt_s->pll == ACPU_PLL_0) {
-    		if ((readl(PLLn_L_VAL(0)) & 0x3f) != PLL_960_MHZ) {
-      	/* Restore PLL0 to standard config */
-      	writel(PLL_960_MHZ, PLLn_L_VAL(0));
-    	}
-    	cpu_relax();
-    	udelay(50);
-  	}
-#endif
 	/* CLK_SEL_SRC1NO */
 	src_sel = reg_clksel & 1;
 
@@ -668,11 +647,7 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s)
 	reg_clkctl = readl_relaxed(A11S_CLK_CNTL_ADDR);
 	reg_clkctl &= ~(0xFF << (8 * src_sel));
 	reg_clkctl |= hunt_s->a11clk_src_sel << (4 + 8 * src_sel);
-#ifdef CONFIG_MSM7X27_OVERCLOCK  
-  	reg_clkctl |= a11_div << (0 + 8 * src_sel);  
-#else
 	reg_clkctl |= hunt_s->a11clk_src_div << (0 + 8 * src_sel);
-#endif
 	writel_relaxed(reg_clkctl, A11S_CLK_CNTL_ADDR);
 
 	/* Program clock source selection */
