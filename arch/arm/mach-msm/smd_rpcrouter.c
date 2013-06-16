@@ -162,7 +162,6 @@ static void do_create_rpcrouter_pdev(struct work_struct *work);
 
 static DECLARE_WORK(work_create_pdevs, do_create_pdevs);
 static DECLARE_WORK(work_create_rpcrouter_pdev, do_create_rpcrouter_pdev);
-static atomic_t rpcrouter_pdev_created = ATOMIC_INIT(0);
 
 #define RR_STATE_IDLE    0
 #define RR_STATE_HEADER  1
@@ -940,8 +939,7 @@ static int process_control_msg(struct rpcrouter_xprt_info *xprt_info,
 static void do_create_rpcrouter_pdev(struct work_struct *work)
 {
 	D("%s: modem rpc router up\n", __func__);
-	if (atomic_cmpxchg(&rpcrouter_pdev_created, 0, 1) == 0)
-		platform_device_register(&rpcrouter_pdev);
+	platform_device_register(&rpcrouter_pdev);
 	complete_all(&rpc_remote_router_up);
 }
 
